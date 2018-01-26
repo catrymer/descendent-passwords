@@ -15,8 +15,29 @@ License URI:  https://www.gnu.org/licenses/gpl-2.0.html
  * @return obj
  */
 function add_descendent_passwords( &$post_object ) {
-	// first check if the $post_object has ancestors with get_post_ancestors(), if that returns an empty array then return the $post_object as is 
-	// iterate over the ancestor array and look for the presence of a password protected page, if none then return the $post_object as is
-	// if a password protected page is found then add that same password to the $post_object, once this occurs it's fine to break out of the iteration??
+	// check if the $post_object has a password set already. If it does then just return it.
+	if( !empty( $post_object->post_password) ) {
+		return $post_object;
+	}
+
+	// check if the $post_object has ancestors, if not then return the $post_object as is 
+	$_post_ancestors = get_post_ancestors( $post_object );
+	if( empty( $_post_ancestors ) ) {
+		return $post_object;
+	}
+
+	// get the passwords for all posts in the ancestor array 
+	$_imploded_ancestors = implode( ", ", $_post_ancestors );
+	global $wpdb;
+	$_ancestor_passwords = $wpdb->get_results( $wpdb->prepare( "SELECT post_password FROM wp_posts WHERE ID IN (%s) AND post_password <> ''", $_imploded_ancestors ) );
+
+	
+	// if any of the ancestor posts had passwords, assign the first password that was found as the password for the current $post_object
+	if( !empty( $_ancestor_passwords ) ) {
+		$post_object->post_password = $_ancestor_passwords[0]->post_password;
+	}
+	
+	return $post_object;
+
 }
 add_action( 'the_post', 'add_descendent_passwords' );
