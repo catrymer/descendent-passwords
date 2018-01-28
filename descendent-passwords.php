@@ -27,9 +27,9 @@ function add_descendent_passwords( &$post_object ) {
 	}
 
 	// get the passwords for all posts in the ancestor array 
-	$_imploded_ancestors = implode( ", ", $_post_ancestors );
+	$_imploded_ancestors = implode( ", ", array_map( "absint", $_post_ancestors ) );
 	global $wpdb;
-	$_ancestor_passwords = $wpdb->get_results( $wpdb->prepare( "SELECT post_password FROM wp_posts WHERE ID IN (%s) AND post_password <> ''", $_imploded_ancestors ) );
+	$_ancestor_passwords = $wpdb->get_results( "SELECT post_password FROM wp_posts WHERE ID IN ($_imploded_ancestors) AND post_password <> ''" );
 
 	
 	// if any of the ancestor posts had passwords, assign the first password that was found as the password for the current $post_object
